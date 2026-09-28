@@ -9,7 +9,7 @@
 #define DEFAULT_K 5
 #define TRAIN_RATIO 0.8   // 80% treino, 20% teste
 #define MAX_LINE 4096
-#define MAX_SAMPLES 1000
+#define MAX_SAMPLES 50000
 
 // ---------------------------------------------------------------------------
 // Estruturas
@@ -20,8 +20,8 @@ typedef struct {
 } Neighbor;
 
 typedef struct {
-    float features[MAX_SAMPLES][NUM_FEATURES];
-    int labels[MAX_SAMPLES];
+    float (*features)[NUM_FEATURES];
+    int *labels;
     int num_samples;
 } Dataset;
 
@@ -37,6 +37,12 @@ int load_dataset(const char *filename, Dataset *dataset) {
     }
 
     char line[MAX_LINE];
+    dataset->features = malloc(MAX_SAMPLES * sizeof(*dataset->features));
+    dataset->labels = malloc(MAX_SAMPLES * sizeof(*dataset->labels));
+    if (!dataset->features || !dataset->labels) {
+        fprintf(stderr, "Erro: memoria insuficiente para o dataset\n");
+        free(dataset->features); free(dataset->labels); fclose(fp); return -1;
+    }
     int row = 0;
 
     // Pular o header
@@ -149,12 +155,12 @@ void knn_sequential(float *train_data, int *train_labels, int num_train,
 // ---------------------------------------------------------------------------
 // main
 // Argumentos: [csv_path] [k] [N]
-//   csv_path: caminho para o CSV (padrao: KNNAlgorithmDataset.csv)
+//   csv_path: caminho para o CSV (padrao: dados_50k.csv)
 //   k:        numero de vizinhos (padrao: 5)
 //   N:        numero de amostras a usar do dataset (padrao: todas)
 // ---------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
-    const char *csv_path = "KNNAlgorithmDataset.csv";
+    const char *csv_path = "dados_50k.csv";
     int k = DEFAULT_K;
     int n_samples = 0; // 0 = usar todas
 
@@ -235,6 +241,8 @@ int main(int argc, char *argv[]) {
     free(test_data);
     free(test_labels);
     free(predictions);
+    free(dataset.features);
+    free(dataset.labels);
 
     return 0;
 }

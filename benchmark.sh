@@ -5,11 +5,11 @@
 # Uso: ./benchmark.sh [N_list] [threads_list]
 # ===========================================================================
 
-DATASET="KNNAlgorithmDataset.csv"
-K=5
-N_LIST="${1:-100 200 300 400 569}"
-THREADS_LIST="${2:-1 2 4 8}"
-RESULTS_FILE="resultados_knn.csv"
+DATASET="${DATASET:-dados_50k.csv}"
+K="${K:-5}"
+N_LIST="${1:-5000 10000 20000 40000}"
+THREADS_LIST="${2:-1 2 4 8 10 16 20 32 40}"
+RESULTS_FILE="${RESULTS_FILE:-resultados_knn.csv}"
 B="build"
 
 # Binarios paralelos: binario:schedule:simd_label
@@ -23,6 +23,12 @@ knn_par_guided_nosimd:guided:OFF"
 # Compilar
 make all 2>/dev/null || { echo "Erro na compilacao"; exit 1; }
 
+if [ ! -f "$DATASET" ]; then
+    echo "Erro: dataset nao encontrado: $DATASET" >&2
+    echo "Gere-o com: ./build/generate_synthetic dados_50k.csv 50000 42" >&2
+    exit 1
+fi
+
 # Header CSV
 echo "N,num_train,num_test,versao,schedule,simd,threads,tempo_seg,acuracia" > $RESULTS_FILE
 
@@ -34,7 +40,11 @@ for N in $N_LIST; do
     echo "=========================================="
 
     # 1. Sequencial (baseline)
-    OUTPUT=$($B/knn_seq $DATASET $K $N 2>&1)
+    OUTPUT=$($B/knn_seq $DATASET $K $N 2>&1) || {
+        echo "Erro ao executar versao sequencial (dataset=$DATASET, N=$N):" >&2
+        echo "$OUTPUT" >&2
+        exit 1
+    }
     SEQ_TIME=$(echo "$OUTPUT" | grep "Tempo Sequencial" | awk '{print $3}')
     ACURACIA=$(echo "$OUTPUT" | grep "Acuracia" | awk '{print $2}' | tr -d '%')
     echo "  SEQ:                     ${SEQ_TIME}s  acc=${ACURACIA}%"
@@ -47,7 +57,11 @@ for N in $N_LIST; do
         SIMD_LABEL=$(echo "$ENTRY" | cut -d: -f3)
 
         for NT in $THREADS_LIST; do
-            OUTPUT=$(OMP_NUM_THREADS=$NT $B/$BIN $DATASET $K $N 2>&1)
+            OUTPUT=$(OMP_NUM_THREADS=$NT $B/$BIN $DATASET $K $N 2>&1) || {
+                echo "Erro ao executar $BIN com $NT threads (dataset=$DATASET, N=$N):" >&2
+                echo "$OUTPUT" >&2
+                exit 1
+            }
             TEMPO=$(echo "$OUTPUT" | grep "Tempo Paralelo" | awk -F': ' '{print $2}' | awk '{print $1}')
             ACURACIA=$(echo "$OUTPUT" | grep "Acuracia" | awk '{print $2}' | tr -d '%')
 

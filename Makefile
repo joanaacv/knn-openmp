@@ -44,7 +44,7 @@ ALL_PAR = $(PAR_STATIC_SIMD) $(PAR_STATIC_NOSIMD) \
 
 ALL = $(SEQ) $(ALL_PAR)
 
-.PHONY: all clean seq par benchmark
+.PHONY: all clean seq par benchmark generate-synthetic benchmark-50k run-all-50k
 
 all: $(ALL)
 
@@ -90,7 +90,7 @@ clean:
 # ---------------------------------------------------------------------------
 # Atalhos de execucao (uso: make run-seq N=200)
 # ---------------------------------------------------------------------------
-DATASET = KNNAlgorithmDataset.csv
+DATASET = dados_50k.csv
 K = 5
 N = 0
 
@@ -109,3 +109,14 @@ run-guided-simd: $(PAR_GUIDED_SIMD)
 # Benchmark completo
 benchmark: $(ALL)
 	./benchmark.sh
+
+generate-synthetic: $(BUILDDIR)/generate_synthetic
+
+benchmark-50k: $(ALL) $(BUILDDIR)/generate_synthetic
+	./run_benchmark_50k.sh
+
+run-all-50k: $(ALL) $(BUILDDIR)/generate_synthetic
+	./run_all_50k.sh
+
+$(BUILDDIR)/generate_synthetic: generate_synthetic.c | $(BUILDDIR)
+	$(CC) $(CFLAGS) -o $@ $<
