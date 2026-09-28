@@ -1,0 +1,7 @@
+build/
+resultados/
+vtune-dados/
+resultados_knn.csv
+*.o
+.playwright-mcp/
+.DS_Store
