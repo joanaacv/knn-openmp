@@ -1,8 +1,13 @@
 build/
 resultados/
 vtune-dados/
+vtune-dados-50k/
 vtune-results/
+vtune-selected/
+vtune-reports/
 resultados_knn.csv
+resultados_vtune_benchmark.csv
+dados_50k.csv
 run_all_output.txt
 *.o
 .playwright-mcp/
