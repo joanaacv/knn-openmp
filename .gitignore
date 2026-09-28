@@ -1,7 +1,9 @@
 build/
 resultados/
 vtune-dados/
+vtune-results/
 resultados_knn.csv
+run_all_output.txt
 *.o
 .playwright-mcp/
 .DS_Store
